@@ -1,51 +1,42 @@
-extends Node2D	
+extends Node2D
 
-var axisx = true
-var axisy = false
-var islooped = true
 var width = ProjectSettings.get_setting("display/window/size/viewport_width")
 var height = ProjectSettings.get_setting("display/window/size/viewport_height")
-# Called when the node enters the scene tree for the first time.
+var y_threshold_min = height/10
+var y_threshold_max = height - y_threshold_min
+var x_threshold_min = y_threshold_min
+var x_threshold_max = width - x_threshold_min
+const SPEED = 3
+
+var step = 1
+var speed_x
+var speed_y
 
 func _ready():
-
 	$player.position.x = width/2
 	$player.position.y = height/2
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(_delta):
+	if step == 1:
+		speed_x = 0
+		speed_y = -SPEED
+		# J'utilise "<=" ici parceque si je ne le fais pas,
+		# position.y oscillera de part et d'autre du seuil.
+		# J'avais pas spécialement anticipé ça.
+		if $player.position.y <= y_threshold_min:
+			step += 1
+	elif step == 2:
+		speed_x = SPEED
+		speed_y = 0
+		if $player.position.x > x_threshold_max:
+			step += 1
+			speed_x = -SPEED
+			speed_y = SPEED
+	elif step == 3:
+		if $player.position.x < x_threshold_min or $player.position.x > x_threshold_max:
+			speed_x = -speed_x
+		if $player.position.y < y_threshold_min or $player.position.y > y_threshold_max:
+			speed_y = -speed_y
 
-	if islooped == true:
-		if  $player.position.y >= height/10:
-			$player.position.y = $player.position.y -2
-		if  $player.position.y <= height/10 && $player.position.x <= width/18*17:
-			$player.position.x = $player.position.x +4
-	#At the end of first path, ignore what's up there ^
-		if  $player.position.x >= width/18*17:
-			islooped = false
-			print("islooped is now false")
-
-	if islooped == false:
-		# Close to the edge
-		if  $player.position.x >= width/18*17:
-			axisx = false
-			print("go left")
-		if  $player.position.x <= width/18:
-			axisx = true
-			print("go right")
-		if  $player.position.y >= height/10*9:
-			axisy = false
-			print("go up")
-		if  $player.position.y <= height/10:
-			axisy = true
-			print("go down")
-		
-		
-		if  axisx == true:
-			$player.position.x = $player.position.x +2
-		if  axisx == false:
-			$player.position.x = $player.position.x -2
-		if  axisy == true:
-			$player.position.y = $player.position.y +2
-		if  axisy == false:
-			$player.position.y = $player.position.y -2
+	$player.position.x += speed_x
+	$player.position.y += speed_y
